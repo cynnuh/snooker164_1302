@@ -29,6 +29,9 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float xInput = 0f;
 
+    private bool isShootingView = false;
+    private bool isTopView = false;
+
     public static GameManager instance;
 
     void Awake()
@@ -39,7 +42,8 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        CameraBehindCueBall();
+        cam.transform.parent = cueBall.transform;
+        SetFollowView();
 
         SetBall(BallColor.Red, 1);
         SetBall(BallColor.Yellow, 2);
@@ -68,6 +72,9 @@ public class GameManager : MonoBehaviour
 
         if (Keyboard.current.backspaceKey.wasPressedThisFrame)
             StopBall();
+
+        if (Keyboard.current.vKey.wasPressedThisFrame)
+            ToggleShotView();
     }
 
     private void SetBall(BallColor col, int i)
@@ -86,9 +93,41 @@ public class GameManager : MonoBehaviour
         rb.AddRelativeForce(Vector3.forward * 50, ForceMode.Impulse);
 
         ballLine.SetActive(false);
-        cam.transform.parent = null;
+        isShootingView = true;
+
+        if (isTopView)
+            cam.transform.parent = null;
+    }
+
+    private void ToggleShotView()
+    {
+        isTopView = !isTopView;
+
+        if (isTopView)
+        {
+            cam.transform.parent = null;
+            SetTopView();
+        }
+        else
+        {
+            cam.transform.parent = cueBall.transform;
+            SetFollowView();
+        }
+    }
+
+    private void SetTopView()
+    {
         cam.transform.position = new Vector3(0, 30f, -42f);
         cam.transform.eulerAngles = new Vector3(45f, 0f, 0f);
+    }
+
+    private void SetFollowView()
+    {
+        if (cueBall == null)
+            return;
+
+        cam.transform.localPosition = new Vector3(0, 3f, -6f);
+        cam.transform.localEulerAngles = new Vector3(30f, 0f, 0f);
     }
 
     private void RotateBall()
@@ -106,13 +145,19 @@ public class GameManager : MonoBehaviour
         cueBall.transform.eulerAngles = new Vector3(0f, 0f, 0f);
 
         ballLine.SetActive(true);
-    }
 
-    private void CameraBehindCueBall()
-    {
-        cam.transform.parent = cueBall.transform;
-        cam.transform.position = cueBall.transform.position + new Vector3(0, 7f, -15f);
-        cam.transform.eulerAngles = new Vector3(30f, 0f, 0f);
+        isShootingView = false;
+
+        if (isTopView)
+        {
+            cam.transform.parent = null;
+            SetTopView();
+        }
+        else
+        {
+            cam.transform.parent = cueBall.transform;
+            SetFollowView();
+        }
     }
 
     public void ShowScoreText(int n)
